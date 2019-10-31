@@ -1,0 +1,23 @@
+{
+    "name": "mrjoops/certificate-store",
+    "description": "A library to handle PKCS12 certificate store",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Alexandre Lahure",
+            "email": "alexandre@lahu.re"
+        }
+    ],
+    "require": {
+        "ext-openssl": "*"
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "autoload": {
+        "psr-4": {
+            "Mrjoops\\CertificateStore\\": "src/"
+        }
+    }
+}
