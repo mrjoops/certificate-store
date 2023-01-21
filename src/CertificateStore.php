@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Mrjoops\CertificateStore;
 
+use DateTimeImmutable;
 use Exception;
 use InvalidArgumentException;
 use OpenSSLAsymmetricKey;
@@ -12,13 +13,42 @@ use OpenSSLCertificate;
 class CertificateStore implements CertificateStoreInterface
 {
     protected OpenSSLCertificate $certificate;
+
+    /**
+     * @var array<string, mixed>
+     */
+    protected array $details;
+
     protected string $passphrase;
     protected OpenSSLAsymmetricKey $privateKey;
 
+    /**
+     * @throws Exception
+     */
     public function __construct(string $certificate, string $privateKey, string $passphrase = '')
     {
         $this->setCertificate($certificate);
         $this->setPrivateKey($privateKey, $passphrase);
+
+        $details = openssl_x509_parse($this->certificate);
+
+        if (!$details) {
+            throw new Exception("Cannot parse certificate.");
+        }
+
+        $this->details = $details;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function get(string $key): mixed
+    {
+        if (!array_key_exists($key, $this->details)) {
+            throw new Exception("Cannot find $key in certificate.");
+        }
+
+        return $this->details[$key];
     }
 
     public function getCertificate(): string
@@ -51,6 +81,16 @@ class CertificateStore implements CertificateStoreInterface
         }
 
         return $out;
+    }
+
+    public function getValidFrom(): DateTimeImmutable | false
+    {
+        return DateTimeImmutable::createFromFormat('ymdhisP', strval($this->get('validFrom')));
+    }
+
+    public function getValidTo(): DateTimeImmutable | false
+    {
+        return DateTimeImmutable::createFromFormat('ymdhisP', strval($this->get('validTo')));
     }
 
     public function hasPassphrase(): bool
@@ -91,9 +131,6 @@ class CertificateStore implements CertificateStoreInterface
         $this->privateKey = $pkey;
     }
 
-    /**
-     * @throws Exception
-     */
     public function toPEM(?string $outputPath, ?string $filename): string
     {
         if (empty($outputPath)) {
@@ -101,13 +138,7 @@ class CertificateStore implements CertificateStoreInterface
         }
 
         if (empty($filename)) {
-            $details = openssl_x509_parse($this->certificate);
-
-            if (!$details || !array_key_exists('name', $details)) {
-                throw new Exception("Cannot find name in certificate.");
-            }
-
-            $filename = $outputPath . '/' . hash('sha256', $details['name']) . '.pem';
+            $filename = $outputPath . '/' . hash('sha256', strval($this->get('name'))) . '.pem';
         }
 
         if (false === file_put_contents($filename, $this->getPrivateKey() . $this->getCertificate())) {
