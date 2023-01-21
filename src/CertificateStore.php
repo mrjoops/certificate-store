@@ -61,7 +61,7 @@ class CertificateStore implements CertificateStoreInterface
     /**
      * @throws InvalidArgumentException
      */
-    public function setCertificate(string $data): self
+    public function setCertificate(string $data): void
     {
         $x509 = openssl_x509_read($data);
 
@@ -70,14 +70,12 @@ class CertificateStore implements CertificateStoreInterface
         }
 
         $this->certificate = $x509;
-
-        return $this;
     }
 
     /**
      * @throws InvalidArgumentException
      */
-    public function setPrivateKey(string $privateKey, string $passphrase = ''): self
+    public function setPrivateKey(string $privateKey, string $passphrase = ''): void
     {
         if (empty($passphrase)) {
             $pkey = openssl_pkey_get_private($privateKey);
@@ -91,14 +89,12 @@ class CertificateStore implements CertificateStoreInterface
 
         $this->passphrase = $passphrase;
         $this->privateKey = $pkey;
-
-        return $this;
     }
 
     /**
      * @throws Exception
      */
-    public function toPEM(string $outputPath = '', string $filename = ''): string
+    public function toPEM(?string $outputPath, ?string $filename): string
     {
         if (empty($outputPath)) {
             $outputPath = sys_get_temp_dir();
@@ -106,6 +102,11 @@ class CertificateStore implements CertificateStoreInterface
 
         if (empty($filename)) {
             $details = openssl_x509_parse($this->certificate);
+
+            if (!$details || !array_key_exists('name', $details)) {
+                throw new Exception("Cannot find name in certificate.");
+            }
+
             $filename = $outputPath . '/' . hash('sha256', $details['name']) . '.pem';
         }
 
