@@ -6,12 +6,14 @@ namespace Mrjoops\CertificateStore;
 
 use Exception;
 use InvalidArgumentException;
+use OpenSSLAsymmetricKey;
+use OpenSSLCertificate;
 
 class CertificateStore implements CertificateStoreInterface
 {
-    protected resource $certificate;
+    protected OpenSSLCertificate $certificate;
     protected string $passphrase;
-    protected resource $privateKey;
+    protected OpenSSLAsymmetricKey $privateKey;
 
     public function __construct(string $certificate, string $privateKey, string $passphrase = '')
     {
