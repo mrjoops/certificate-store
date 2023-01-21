@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace Mrjoops\CertificateStore;
 
-use InvalidArgumentException;
+use ValueError;
 
 class CertificateStoreFactory
 {
+    /**
+     * @throws ValueError
+     */
     public static function createFromPKCS12(string $pkcs12, string $passphrase): CertificateStore
     {
         if (!openssl_pkcs12_read($pkcs12, $certs, $passphrase)) {
-            throw new InvalidArgumentException('Data is not a PKCS12 certificate store or passphrase is incorrect');
+            throw new ValueError('Data is not a PKCS12 certificate store or passphrase is incorrect');
         }
 
         return new CertificateStore($certs['cert'], $certs['pkey'], $passphrase);
@@ -23,18 +26,18 @@ class CertificateStoreFactory
     }
 
     /**
-     * @throws InvalidArgumentException
+     * @throws ValueError
      */
     protected static function readFile(string $filename): string
     {
         if (!is_file($filename)) {
-            throw new InvalidArgumentException("$filename is not a regular file");
+            throw new ValueError("$filename is not a regular file");
         }
 
         $content = file_get_contents($filename);
 
         if (false === $content) {
-            throw new InvalidArgumentException("$filename is not readable");
+            throw new ValueError("$filename is not readable");
         }
 
         return $content;
