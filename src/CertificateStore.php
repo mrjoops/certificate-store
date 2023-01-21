@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace Mrjoops\CertificateStore;
 
 use DateTimeImmutable;
-use Exception;
-use InvalidArgumentException;
 use OpenSSLAsymmetricKey;
 use OpenSSLCertificate;
+use ValueError;
 
 class CertificateStore implements CertificateStoreInterface
 {
@@ -23,7 +22,7 @@ class CertificateStore implements CertificateStoreInterface
     protected OpenSSLAsymmetricKey $privateKey;
 
     /**
-     * @throws Exception
+     * @throws CertificateStoreException
      */
     public function __construct(string $certificate, string $privateKey, string $passphrase = '')
     {
@@ -33,28 +32,31 @@ class CertificateStore implements CertificateStoreInterface
         $details = openssl_x509_parse($this->certificate);
 
         if (!$details) {
-            throw new Exception("Cannot parse certificate.");
+            throw new CertificateStoreException("Cannot parse certificate.");
         }
 
         $this->details = $details;
     }
 
     /**
-     * @throws Exception
+     * @throws CertificateStoreException
      */
     public function get(string $key): mixed
     {
         if (!array_key_exists($key, $this->details)) {
-            throw new Exception("Cannot find $key in certificate.");
+            throw new CertificateStoreException("Cannot find $key in certificate.");
         }
 
         return $this->details[$key];
     }
 
+    /**
+     * @throws CertificateStoreException
+     */
     public function getCertificate(): string
     {
         if (!openssl_x509_export($this->certificate, $out)) {
-            throw new Exception('Certificate cannot be exported');
+            throw new CertificateStoreException('Certificate cannot be exported');
         }
 
         return $out;
@@ -66,7 +68,7 @@ class CertificateStore implements CertificateStoreInterface
     }
 
     /**
-     * @throws Exception
+     * @throws CertificateStoreException
      */
     public function getPrivateKey(): string
     {
@@ -77,7 +79,7 @@ class CertificateStore implements CertificateStoreInterface
         }
 
         if (!$exportOk) {
-            throw new Exception('Private key cannot be exported');
+            throw new CertificateStoreException('Private key cannot be exported');
         }
 
         return $out;
@@ -99,21 +101,21 @@ class CertificateStore implements CertificateStoreInterface
     }
 
     /**
-     * @throws InvalidArgumentException
+     * @throws ValueError
      */
     public function setCertificate(string $data): void
     {
         $x509 = openssl_x509_read($data);
 
         if (false === $x509) {
-            throw new InvalidArgumentException('Data does not contain a valid certificate');
+            throw new ValueError('Data does not contain a valid certificate');
         }
 
         $this->certificate = $x509;
     }
 
     /**
-     * @throws InvalidArgumentException
+     * @throws ValueError
      */
     public function setPrivateKey(string $privateKey, string $passphrase = ''): void
     {
@@ -124,7 +126,7 @@ class CertificateStore implements CertificateStoreInterface
         }
 
         if (false === $pkey) {
-            throw new InvalidArgumentException('Data  does not contain a valid private key or passphrase is incorrect');
+            throw new ValueError('Data  does not contain a valid private key or passphrase is incorrect');
         }
 
         $this->passphrase = $passphrase;
@@ -142,7 +144,7 @@ class CertificateStore implements CertificateStoreInterface
         }
 
         if (false === file_put_contents($filename, $this->getPrivateKey() . $this->getCertificate())) {
-            throw new Exception("$filename is not writable");
+            throw new CertificateStoreException("$filename is not writable");
         }
 
         return $filename;
