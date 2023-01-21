@@ -8,12 +8,6 @@ use InvalidArgumentException;
 
 class CertificateStoreFactory
 {
-    /**
-     * @param string $pkcs12
-     * @param string $passphrase
-     *
-     * @return CertificateStore
-     */
     public static function createFromPKCS12(string $pkcs12, string $passphrase): CertificateStore
     {
         if (!openssl_pkcs12_read($pkcs12, $certs, $passphrase)) {
@@ -23,22 +17,12 @@ class CertificateStoreFactory
         return new CertificateStore($certs['cert'], $certs['pkey'], $passphrase);
     }
 
-    /**
-     * @param string $filename
-     * @param string $passphrase
-     *
-     * @return CertificateStore
-     */
     public static function createFromPKCS12File(string $filename, string $passphrase): CertificateStore
     {
         return self::createFromPKCS12(self::readFile($filename), $passphrase);
     }
 
     /**
-     * @param string $filename
-     *
-     * @return string
-     *
      * @throws InvalidArgumentException
      */
     protected static function readFile(string $filename): string

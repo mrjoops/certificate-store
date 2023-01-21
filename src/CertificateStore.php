@@ -9,35 +9,16 @@ use InvalidArgumentException;
 
 class CertificateStore implements CertificateStoreInterface
 {
-    /**
-     * @var resource
-     */
-    protected $certificate;
+    protected resource $certificate;
+    protected string $passphrase;
+    protected resource $privateKey;
 
-    /**
-     * @var string
-     */
-    protected $passphrase;
-
-    /**
-     * @var resource
-     */
-    protected $privateKey;
-
-    /**
-     * @param string $certificate
-     * @param string $privateKey
-     * @param string $passphrase
-     */
     public function __construct(string $certificate, string $privateKey, string $passphrase = '')
     {
         $this->setCertificate($certificate);
         $this->setPrivateKey($privateKey, $passphrase);
     }
 
-    /**
-     * @return string
-     */
     public function getCertificate(): string
     {
         if (!openssl_x509_export($this->certificate, $out)) {
@@ -47,17 +28,12 @@ class CertificateStore implements CertificateStoreInterface
         return $out;
     }
 
-    /**
-     * @return string
-     */
     public function getPassphrase(): string
     {
         return $this->passphrase;
     }
 
     /**
-     * @return string
-     *
      * @throws Exception
      */
     public function getPrivateKey(): string
@@ -75,19 +51,12 @@ class CertificateStore implements CertificateStoreInterface
         return $out;
     }
 
-    /**
-     * @return bool
-     */
     public function hasPassphrase(): bool
     {
         return 0 !== strlen($this->passphrase);
     }
 
     /**
-     * @param string $data
-     *
-     * @return CertificateStore
-     *
      * @throws InvalidArgumentException
      */
     public function setCertificate(string $data): self
@@ -104,11 +73,6 @@ class CertificateStore implements CertificateStoreInterface
     }
 
     /**
-     * @param string $privateKey
-     * @param string $passphrase
-     *
-     * @return CertificateStore
-     *
      * @throws InvalidArgumentException
      */
     public function setPrivateKey(string $privateKey, string $passphrase = ''): self
@@ -130,22 +94,17 @@ class CertificateStore implements CertificateStoreInterface
     }
 
     /**
-     * @param string $filename
-     *
-     * @return string Output path
-     * @return string File name
-     *
      * @throws Exception
      */
-    public function toPEM(string $path = '', string $filename = ''): string
+    public function toPEM(string $outputPath = '', string $filename = ''): string
     {
-        if (empty($path)) {
-            $path = sys_get_temp_dir();
+        if (empty($outputPath)) {
+            $outputPath = sys_get_temp_dir();
         }
 
         if (empty($filename)) {
             $details = openssl_x509_parse($this->certificate);
-            $filename = $path . '/' . hash('sha256', $details['name']) . '.pem';
+            $filename = $outputPath . '/' . hash('sha256', $details['name']) . '.pem';
         }
 
         if (false === file_put_contents($filename, $this->getPrivateKey() . $this->getCertificate())) {
