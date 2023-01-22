@@ -10,5 +10,5 @@ interface CertificateStoreInterface
 
     public function hasPassphrase(): bool;
 
-    public function toPEM(?string $outputPath, ?string $filename): string;
+    public function toPEM(string $outputPath = '', string $filename = ''): string;
 }

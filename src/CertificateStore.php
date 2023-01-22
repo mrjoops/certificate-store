@@ -133,7 +133,7 @@ class CertificateStore implements CertificateStoreInterface
         $this->privateKey = $pkey;
     }
 
-    public function toPEM(?string $outputPath, ?string $filename): string
+    public function toPEM(string $outputPath = '', string $filename = ''): string
     {
         if (empty($outputPath)) {
             $outputPath = sys_get_temp_dir();
